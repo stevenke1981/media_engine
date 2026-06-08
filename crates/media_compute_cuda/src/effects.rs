@@ -72,6 +72,33 @@ impl ComputeEffect for CudaKernelEffect {
                     &self.func, &dev_buf, width, height, stride, grid_x, grid_y, strength,
                 )?;
             }
+            EffectKind::Sepia => {
+                launch_sepia(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::EdgeDetect => {
+                launch_edge_detect(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::Threshold => {
+                let threshold = extract_float(&desc.params, 0, 0.5);
+                launch_threshold(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, threshold,
+                )?;
+            }
+            EffectKind::BoxBlur => {
+                let radius = extract_float(&desc.params, 0, 3.0);
+                launch_box_blur(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, radius,
+                )?;
+            }
+            EffectKind::Emboss => {
+                launch_emboss(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::Pixelate => {
+                let block_size = extract_float(&desc.params, 0, 8.0);
+                launch_pixelate(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, block_size,
+                )?;
+            }
             EffectKind::Custom(_) => {
                 return Err(MediaError::Other(format!(
                     "Custom effect '{:?}' not implemented in CUDA backend",
@@ -140,6 +167,33 @@ impl ComputeEffect for CudaKernelEffect {
                 let strength = extract_float(&desc.params, 0, 0.5);
                 launch_sharpen(
                     &self.func, &dev_buf, width, height, stride, grid_x, grid_y, strength,
+                )?;
+            }
+            EffectKind::Sepia => {
+                launch_sepia(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::EdgeDetect => {
+                launch_edge_detect(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::Threshold => {
+                let threshold = extract_float(&desc.params, 0, 0.5);
+                launch_threshold(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, threshold,
+                )?;
+            }
+            EffectKind::BoxBlur => {
+                let radius = extract_float(&desc.params, 0, 3.0);
+                launch_box_blur(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, radius,
+                )?;
+            }
+            EffectKind::Emboss => {
+                launch_emboss(&self.func, &dev_buf, width, height, stride, grid_x, grid_y)?;
+            }
+            EffectKind::Pixelate => {
+                let block_size = extract_float(&desc.params, 0, 8.0);
+                launch_pixelate(
+                    &self.func, &dev_buf, width, height, stride, grid_x, grid_y, block_size,
                 )?;
             }
             EffectKind::Custom(_) => {
@@ -287,6 +341,120 @@ fn launch_invert(
         &(width as i32) as *const i32 as *mut _,
         &(height as i32) as *const i32 as *mut _,
         &(stride as i32) as *const i32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_sepia(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 4] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_edge_detect(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 4] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_threshold(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+    threshold: f32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 5] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+        &threshold as *const f32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_box_blur(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+    radius: f32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 5] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+        &radius as *const f32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_emboss(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 4] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+    ];
+    func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
+}
+
+fn launch_pixelate(
+    func: &CudaFunction,
+    buf: &CudaBuffer,
+    width: u32,
+    height: u32,
+    stride: u32,
+    grid_x: u32,
+    grid_y: u32,
+    block_size: f32,
+) -> MediaResult<()> {
+    let args: [*mut std::ffi::c_void; 5] = [
+        &buf.device_ptr() as *const u64 as *mut _,
+        &(width as i32) as *const i32 as *mut _,
+        &(height as i32) as *const i32 as *mut _,
+        &(stride as i32) as *const i32 as *mut _,
+        &block_size as *const f32 as *mut _,
     ];
     func.launch(grid_x, grid_y, 1, 16, 16, 1, &args)
 }

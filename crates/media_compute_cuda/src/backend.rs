@@ -39,6 +39,12 @@ impl CudaBackend {
         let invert_func = module.get_function("invert_kernel")?;
         let blur_func = module.get_function("blur_kernel")?;
         let sharpen_func = module.get_function("sharpen_kernel")?;
+        let sepia_func = module.get_function("sepia_kernel")?;
+        let edge_detect_func = module.get_function("edge_detect_kernel")?;
+        let threshold_func = module.get_function("threshold_kernel")?;
+        let box_blur_func = module.get_function("box_blur_kernel")?;
+        let emboss_func = module.get_function("emboss_kernel")?;
+        let pixelate_func = module.get_function("pixelate_kernel")?;
 
         let effects: Vec<Box<dyn ComputeEffect>> = vec![
             Box::new(CudaKernelEffect::new(
@@ -70,6 +76,36 @@ impl CudaBackend {
                 "sharpen".into(),
                 EffectKind::Sharpen,
                 sharpen_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "sepia".into(),
+                EffectKind::Sepia,
+                sepia_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "edge_detect".into(),
+                EffectKind::EdgeDetect,
+                edge_detect_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "threshold".into(),
+                EffectKind::Threshold,
+                threshold_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "box_blur".into(),
+                EffectKind::BoxBlur,
+                box_blur_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "emboss".into(),
+                EffectKind::Emboss,
+                emboss_func,
+            )),
+            Box::new(CudaKernelEffect::new(
+                "pixelate".into(),
+                EffectKind::Pixelate,
+                pixelate_func,
             )),
         ];
 
@@ -120,6 +156,12 @@ impl ComputeBackend for CudaBackend {
                     "invert" => EffectKind::Invert,
                     "blur" => EffectKind::Blur,
                     "sharpen" => EffectKind::Sharpen,
+                    "sepia" => EffectKind::Sepia,
+                    "edge_detect" => EffectKind::EdgeDetect,
+                    "threshold" => EffectKind::Threshold,
+                    "box_blur" => EffectKind::BoxBlur,
+                    "emboss" => EffectKind::Emboss,
+                    "pixelate" => EffectKind::Pixelate,
                     _ => EffectKind::Custom(e.name().into()),
                 })
             })
@@ -134,6 +176,12 @@ impl ComputeBackend for CudaBackend {
             EffectKind::Invert => e.name() == "invert",
             EffectKind::Blur => e.name() == "blur",
             EffectKind::Sharpen => e.name() == "sharpen",
+            EffectKind::Sepia => e.name() == "sepia",
+            EffectKind::EdgeDetect => e.name() == "edge_detect",
+            EffectKind::Threshold => e.name() == "threshold",
+            EffectKind::BoxBlur => e.name() == "box_blur",
+            EffectKind::Emboss => e.name() == "emboss",
+            EffectKind::Pixelate => e.name() == "pixelate",
             EffectKind::Custom(name) => e.name() == name,
             _ => false,
         })
@@ -149,6 +197,12 @@ impl ComputeBackend for CudaBackend {
                 EffectKind::Invert => e.name() == "invert",
                 EffectKind::Blur => e.name() == "blur",
                 EffectKind::Sharpen => e.name() == "sharpen",
+                EffectKind::Sepia => e.name() == "sepia",
+                EffectKind::EdgeDetect => e.name() == "edge_detect",
+                EffectKind::Threshold => e.name() == "threshold",
+                EffectKind::BoxBlur => e.name() == "box_blur",
+                EffectKind::Emboss => e.name() == "emboss",
+                EffectKind::Pixelate => e.name() == "pixelate",
                 EffectKind::Custom(name) => e.name() == name,
                 _ => false,
             })
@@ -182,6 +236,12 @@ fn load_ptx_module(_name: &str) -> MediaResult<CudaModule> {
         INVERT_PTX,
         BLUR_PTX,
         SHARPEN_PTX,
+        SEPIA_PTX,
+        EDGE_DETECT_PTX,
+        THRESHOLD_PTX,
+        BOX_BLUR_PTX,
+        EMBOSS_PTX,
+        PIXELATE_PTX,
     ];
 
     // Concatenate into one big PTX string (each is already a
