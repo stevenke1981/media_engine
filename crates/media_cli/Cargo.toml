@@ -10,5 +10,12 @@ media_image = { path = "../media_image" }
 media_compute = { path = "../media_compute" }
 media_compute_cpu = { path = "../media_compute_cpu" }
 media_compute_pipeline = { path = "../media_compute_pipeline" }
+media_compute_wgpu = { path = "../media_compute_wgpu", optional = true }
+media_compute_cuda = { path = "../media_compute_cuda", optional = true }
 anyhow.workspace = true
 clap.workspace = true
+
+[features]
+default = ["wgpu-backend"]
+wgpu-backend = ["dep:media_compute_wgpu"]
+cuda-backend = ["dep:media_compute_cuda"]

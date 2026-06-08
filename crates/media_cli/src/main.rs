@@ -19,71 +19,24 @@ enum Commands {
         /// Path to the input image.
         input: String,
     },
-    /// Apply brightness using the CPU backend.
-    CpuBrightness {
+    /// Apply an image effect with the given backend.
+    Apply {
         /// Input image path.
         input: String,
         /// Output image path.
         output: String,
-        /// Brightness factor (-1.0 to 1.0).
-        #[arg(long, default_value = "0.1")]
-        factor: f32,
-        /// Output format.
-        #[arg(long, value_enum, default_value = "png")]
-        format: OutputFormat,
-    },
-    /// Apply contrast using the CPU backend.
-    CpuContrast {
-        /// Input image path.
-        input: String,
-        /// Output image path.
-        output: String,
-        /// Contrast factor.
-        #[arg(long, default_value = "1.5")]
-        factor: f32,
-        /// Output format.
-        #[arg(long, value_enum, default_value = "png")]
-        format: OutputFormat,
-    },
-    /// Convert to grayscale using the CPU backend.
-    CpuGrayscale {
-        /// Input image path.
-        input: String,
-        /// Output image path.
-        output: String,
-        /// Output format.
-        #[arg(long, value_enum, default_value = "png")]
-        format: OutputFormat,
-    },
-    /// Invert colors using the CPU backend.
-    CpuInvert {
-        /// Input image path.
-        input: String,
-        /// Output image path.
-        output: String,
-        /// Output format.
-        #[arg(long, value_enum, default_value = "png")]
-        format: OutputFormat,
-    },
-    /// Apply 3×3 box blur using the CPU backend.
-    CpuBlur {
-        /// Input image path.
-        input: String,
-        /// Output image path.
-        output: String,
-        /// Output format.
-        #[arg(long, value_enum, default_value = "png")]
-        format: OutputFormat,
-    },
-    /// Apply unsharp-mask sharpen using the CPU backend.
-    CpuSharpen {
-        /// Input image path.
-        input: String,
-        /// Output image path.
-        output: String,
-        /// Sharpen strength (0.0 = no change).
-        #[arg(long, default_value = "1.0")]
-        strength: f32,
+        /// Effect name (brightness, contrast, grayscale, invert, blur,
+        /// sharpen, sepia, edge_detect, threshold, box_blur, emboss,
+        /// pixelate).
+        #[arg(long)]
+        effect: String,
+        /// Effect parameter(s) in key=value form (e.g. factor=0.5).
+        /// May be repeated for effects with multiple parameters.
+        #[arg(long)]
+        param: Vec<String>,
+        /// Compute backend (cpu, wgpu, cuda).
+        #[arg(long, default_value = "cpu")]
+        backend: BackendKind,
         /// Output format.
         #[arg(long, value_enum, default_value = "png")]
         format: OutputFormat,
@@ -98,10 +51,22 @@ enum Commands {
         /// Override output path from the config.
         #[arg(long)]
         output: Option<String>,
+        /// Compute backend for individual effects (cpu, wgpu, cuda).
+        #[arg(long, default_value = "cpu")]
+        backend: BackendKind,
         /// Output format.
         #[arg(long, value_enum)]
         format: Option<OutputFormat>,
     },
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+enum BackendKind {
+    Cpu,
+    #[cfg(feature = "wgpu-backend")]
+    Wgpu,
+    #[cfg(feature = "cuda-backend")]
+    Cuda,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug)]
@@ -126,45 +91,21 @@ fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::ImageInfo { input } => commands::cmd_image_info(&input)?,
-        Commands::CpuBrightness {
+        Commands::Apply {
             input,
             output,
-            factor,
+            effect,
+            param,
+            backend,
             format,
-        } => commands::cmd_cpu_brightness(&input, &output, factor, format.into())?,
-        Commands::CpuContrast {
-            input,
-            output,
-            factor,
-            format,
-        } => commands::cmd_cpu_contrast(&input, &output, factor, format.into())?,
-        Commands::CpuGrayscale {
-            input,
-            output,
-            format,
-        } => commands::cmd_cpu_grayscale(&input, &output, format.into())?,
-        Commands::CpuInvert {
-            input,
-            output,
-            format,
-        } => commands::cmd_cpu_invert(&input, &output, format.into())?,
-        Commands::CpuBlur {
-            input,
-            output,
-            format,
-        } => commands::cmd_cpu_blur(&input, &output, format.into())?,
-        Commands::CpuSharpen {
-            input,
-            output,
-            strength,
-            format,
-        } => commands::cmd_cpu_sharpen(&input, &output, strength, format.into())?,
+        } => commands::cmd_apply(&input, &output, &effect, &param, &backend, format.into())?,
         Commands::PipelineRun {
             config,
             input,
             output,
+            backend,
             format,
-        } => commands::cmd_pipeline_run(&config, input, output, format.map(Into::into))?,
+        } => commands::cmd_pipeline_run(&config, input, output, &backend, format.map(Into::into))?,
     }
 
     Ok(())
