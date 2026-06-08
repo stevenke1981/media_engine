@@ -11,5 +11,7 @@ pub mod simd;
 pub use backend::CpuBackend;
 pub use buffer::CpuBuffer;
 pub use effects::{
-    BlurEffect, BrightnessEffect, ContrastEffect, GrayscaleEffect, InvertEffect, SharpenEffect,
+    BlurEffect, BoxBlurEffect, BrightnessEffect, ContrastEffect, EmbossEffect, GrayscaleEffect,
+    InvertEffect, PixelateEffect, SepiaEffect, SharpenEffect, SobelEdgeDetectEffect,
+    ThresholdEffect,
 };

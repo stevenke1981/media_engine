@@ -78,6 +78,12 @@ impl ComputeEffect for CudaKernelEffect {
                     desc.kind,
                 )));
             }
+            _ => {
+                return Err(MediaError::Other(format!(
+                    "Effect '{:?}' not implemented in CUDA backend",
+                    desc.kind,
+                )));
+            }
         }
 
         // ── Read back ─────────────────────────────────────────
@@ -139,6 +145,12 @@ impl ComputeEffect for CudaKernelEffect {
             EffectKind::Custom(_) => {
                 return Err(MediaError::Other(format!(
                     "Custom effect '{:?}' not implemented in CUDA backend",
+                    desc.kind,
+                )));
+            }
+            _ => {
+                return Err(MediaError::Other(format!(
+                    "Effect '{:?}' not implemented in CUDA backend",
                     desc.kind,
                 )));
             }

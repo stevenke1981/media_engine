@@ -1,0 +1,11 @@
+input = "test_pipeline_input.png"
+output = "test_pipeline_output.png"
+
+[[nodes]]
+name = "gray"
+kind = "Grayscale"
+
+[[nodes]]
+name = "edges"
+kind = "EdgeDetect"
+depends_on = ["gray"]

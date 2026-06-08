@@ -9,5 +9,6 @@ media_core = { path = "../media_core" }
 media_image = { path = "../media_image" }
 media_compute = { path = "../media_compute" }
 media_compute_cpu = { path = "../media_compute_cpu" }
+media_compute_pipeline = { path = "../media_compute_pipeline" }
 anyhow.workspace = true
 clap.workspace = true

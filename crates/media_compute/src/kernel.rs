@@ -105,6 +105,12 @@ pub enum EffectKind {
     Invert,
     Blur,
     Sharpen,
+    EdgeDetect,
+    Sepia,
+    Threshold,
+    BoxBlur,
+    Emboss,
+    Pixelate,
     Custom(String),
 }
 

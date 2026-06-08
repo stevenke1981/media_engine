@@ -88,6 +88,20 @@ enum Commands {
         #[arg(long, value_enum, default_value = "png")]
         format: OutputFormat,
     },
+    /// Run a pipeline defined in a JSON or TOML config file.
+    PipelineRun {
+        /// Path to the pipeline config file (.json or .toml).
+        config: String,
+        /// Override input path from the config.
+        #[arg(long)]
+        input: Option<String>,
+        /// Override output path from the config.
+        #[arg(long)]
+        output: Option<String>,
+        /// Output format.
+        #[arg(long, value_enum)]
+        format: Option<OutputFormat>,
+    },
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug)]
@@ -145,6 +159,12 @@ fn main() -> anyhow::Result<()> {
             strength,
             format,
         } => commands::cmd_cpu_sharpen(&input, &output, strength, format.into())?,
+        Commands::PipelineRun {
+            config,
+            input,
+            output,
+            format,
+        } => commands::cmd_pipeline_run(&config, input, output, format.map(Into::into))?,
     }
 
     Ok(())

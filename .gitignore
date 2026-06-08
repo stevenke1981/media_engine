@@ -1,3 +1,7 @@
 /target/
 **/*.rs.bk
 Cargo.lock
+
+# Test artifacts
+test_pipeline_input.png
+test_pipeline_output*.png

@@ -13,6 +13,7 @@ use media_core::Frame;
 
 use crate::EffectProvider;
 
+pub mod config;
 pub mod execute;
 pub mod validate;
 
@@ -234,6 +235,12 @@ impl From<DagNodeDef> for DagNode {
             "invert" => EffectKind::Invert,
             "blur" => EffectKind::Blur,
             "sharpen" => EffectKind::Sharpen,
+            "edgedetect" | "edge_detect" | "edge-detect" => EffectKind::EdgeDetect,
+            "sepia" => EffectKind::Sepia,
+            "threshold" => EffectKind::Threshold,
+            "boxblur" | "box_blur" | "box-blur" => EffectKind::BoxBlur,
+            "emboss" => EffectKind::Emboss,
+            "pixelate" => EffectKind::Pixelate,
             other => EffectKind::Custom(other.to_string()),
         };
         let params: Vec<EffectParam> = def.params.iter().map(EffectParam::from).collect();

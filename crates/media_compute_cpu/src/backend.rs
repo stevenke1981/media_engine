@@ -2,7 +2,9 @@
 
 use crate::buffer::CpuBuffer;
 use crate::effects::{
-    BlurEffect, BrightnessEffect, ContrastEffect, GrayscaleEffect, InvertEffect, SharpenEffect,
+    BlurEffect, BoxBlurEffect, BrightnessEffect, ContrastEffect, EmbossEffect, GrayscaleEffect,
+    InvertEffect, PixelateEffect, SepiaEffect, SharpenEffect, SobelEdgeDetectEffect,
+    ThresholdEffect,
 };
 use media_compute::{
     ComputeBackend, ComputeBuffer, ComputeEffect, EffectDesc, EffectKind, ImageCodec,
@@ -27,6 +29,12 @@ impl CpuBackend {
             Box::new(InvertEffect),
             Box::new(BlurEffect),
             Box::new(SharpenEffect),
+            Box::new(SobelEdgeDetectEffect),
+            Box::new(SepiaEffect),
+            Box::new(ThresholdEffect),
+            Box::<BoxBlurEffect>::default(),
+            Box::new(EmbossEffect),
+            Box::new(PixelateEffect),
         ];
 
         CpuBackend { effects }
@@ -68,6 +76,12 @@ impl ComputeBackend for CpuBackend {
                     "invert" => EffectKind::Invert,
                     "blur" => EffectKind::Blur,
                     "sharpen" => EffectKind::Sharpen,
+                    "edge_detect" => EffectKind::EdgeDetect,
+                    "sepia" => EffectKind::Sepia,
+                    "threshold" => EffectKind::Threshold,
+                    "box_blur" => EffectKind::BoxBlur,
+                    "emboss" => EffectKind::Emboss,
+                    "pixelate" => EffectKind::Pixelate,
                     name => EffectKind::Custom(name.to_string()),
                 };
                 EffectDesc::new(kind)
@@ -141,6 +155,12 @@ fn effect_kind_matches(name: &str, kind: &EffectKind) -> bool {
         EffectKind::Invert => name == "invert",
         EffectKind::Blur => name == "blur",
         EffectKind::Sharpen => name == "sharpen",
+        EffectKind::EdgeDetect => name == "edge_detect",
+        EffectKind::Sepia => name == "sepia",
+        EffectKind::Threshold => name == "threshold",
+        EffectKind::BoxBlur => name == "box_blur",
+        EffectKind::Emboss => name == "emboss",
+        EffectKind::Pixelate => name == "pixelate",
         EffectKind::Custom(s) => name == s.as_str(),
     }
 }

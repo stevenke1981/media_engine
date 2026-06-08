@@ -22,7 +22,13 @@ fn main() {
             lib_dir.display()
         );
     }
-    println!("cargo:rustc-link-lib=nvcuda");
+    // CUDA 12.3+ renamed nvcuda.lib → cuda.lib; try both.
+    let cuda_lib_name = if lib_dir.join("cuda.lib").exists() {
+        "cuda"
+    } else {
+        "nvcuda"
+    };
+    println!("cargo:rustc-link-lib={}", cuda_lib_name);
 
     // ── Compile CUDA kernels to PTX ───────────────────────────────────
     let kernel_dir = Path::new("kernels");
@@ -257,7 +263,11 @@ fn resolve_cuda_path() -> Box<Path> {
             return Path::new(&path).into();
         }
     }
-    // Fall back to the typical default install location (v12.x).
+    // Fall back to typical default install locations (v12.x).
+    let default = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.8";
+    if Path::new(default).exists() {
+        return Path::new(default).into();
+    }
     let default = r"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6";
     if Path::new(default).exists() {
         return Path::new(default).into();

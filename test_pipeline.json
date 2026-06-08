@@ -1,0 +1,7 @@
+{
+  "nodes": [
+    {"name": "g", "kind": "Grayscale"},
+    {"name": "s", "kind": "Sepia", "depends_on": ["g"]},
+    {"name": "b", "kind": "Brightness", "params": [0.15], "depends_on": ["s"]}
+  ]
+}

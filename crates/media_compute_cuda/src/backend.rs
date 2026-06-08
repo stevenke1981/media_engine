@@ -135,6 +135,7 @@ impl ComputeBackend for CudaBackend {
             EffectKind::Blur => e.name() == "blur",
             EffectKind::Sharpen => e.name() == "sharpen",
             EffectKind::Custom(name) => e.name() == name,
+            _ => false,
         })
     }
 
@@ -149,6 +150,7 @@ impl ComputeBackend for CudaBackend {
                 EffectKind::Blur => e.name() == "blur",
                 EffectKind::Sharpen => e.name() == "sharpen",
                 EffectKind::Custom(name) => e.name() == name,
+                _ => false,
             })
             .map(|b| b.as_ref())
     }
