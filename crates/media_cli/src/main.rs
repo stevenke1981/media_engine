@@ -65,6 +65,29 @@ enum Commands {
         #[arg(long, value_enum, default_value = "png")]
         format: OutputFormat,
     },
+    /// Apply 3×3 box blur using the CPU backend.
+    CpuBlur {
+        /// Input image path.
+        input: String,
+        /// Output image path.
+        output: String,
+        /// Output format.
+        #[arg(long, value_enum, default_value = "png")]
+        format: OutputFormat,
+    },
+    /// Apply unsharp-mask sharpen using the CPU backend.
+    CpuSharpen {
+        /// Input image path.
+        input: String,
+        /// Output image path.
+        output: String,
+        /// Sharpen strength (0.0 = no change).
+        #[arg(long, default_value = "1.0")]
+        strength: f32,
+        /// Output format.
+        #[arg(long, value_enum, default_value = "png")]
+        format: OutputFormat,
+    },
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug)]
@@ -111,6 +134,17 @@ fn main() -> anyhow::Result<()> {
             output,
             format,
         } => commands::cmd_cpu_invert(&input, &output, format.into())?,
+        Commands::CpuBlur {
+            input,
+            output,
+            format,
+        } => commands::cmd_cpu_blur(&input, &output, format.into())?,
+        Commands::CpuSharpen {
+            input,
+            output,
+            strength,
+            format,
+        } => commands::cmd_cpu_sharpen(&input, &output, strength, format.into())?,
     }
 
     Ok(())

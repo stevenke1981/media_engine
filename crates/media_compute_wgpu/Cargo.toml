@@ -1,0 +1,13 @@
+[package]
+name = "media_compute_wgpu"
+version = "0.1.0"
+edition = "2021"
+description = "WGPU compute backend for the Rust Media Engine"
+
+[dependencies]
+media_core = { path = "../media_core" }
+media_compute = { path = "../media_compute" }
+wgpu.workspace = true
+bytemuck.workspace = true
+pollster.workspace = true
+log.workspace = true

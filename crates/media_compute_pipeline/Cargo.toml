@@ -1,0 +1,13 @@
+[package]
+name = "media_compute_pipeline"
+version = "0.1.0"
+edition = "2021"
+description = "Media Engine compute pipeline — composes multiple compute effects"
+
+[dependencies]
+media_core = { path = "../media_core" }
+media_compute = { path = "../media_compute" }
+rayon.workspace = true
+thiserror.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

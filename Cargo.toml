@@ -5,6 +5,9 @@ members = [
     "crates/media_image",
     "crates/media_compute",
     "crates/media_compute_cpu",
+    "crates/media_compute_cuda",
+    "crates/media_compute_wgpu",
+    "crates/media_compute_pipeline",
     "crates/media_cli",
 ]
 
@@ -15,3 +18,7 @@ image = "0.25"
 bytemuck = "1"
 rayon = "1"
 clap = { version = "4", features = ["derive"] }
+log = "0.4"
+wgpu = "23"
+winit = "0.30"
+pollster = "0.4"

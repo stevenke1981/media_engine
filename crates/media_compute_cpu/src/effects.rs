@@ -204,8 +204,142 @@ impl ComputeEffect for InvertEffect {
 }
 
 // ----------------------------------------------------------------
+// Blur (3×3 box blur)
+// ----------------------------------------------------------------
+#[derive(Default)]
+pub struct BlurEffect;
+
+impl ComputeEffect for BlurEffect {
+    fn name(&self) -> &str {
+        "blur"
+    }
+
+    fn supports_in_place(&self) -> bool {
+        true
+    }
+
+    fn apply(&self, src: &Frame, desc: &EffectDesc) -> MediaResult<Frame> {
+        let mut dst = clone_frame(src)?;
+        self.apply_in_place(&mut dst, desc)?;
+        Ok(dst)
+    }
+
+    fn apply_in_place(&self, frame: &mut Frame, _desc: &EffectDesc) -> MediaResult<()> {
+        let (w, h) = (frame.width, frame.height);
+        let cpu = frame
+            .as_cpu_mut()
+            .ok_or_else(|| MediaError::Other("Not a CPU frame".into()))?;
+
+        // Clone source so we read clean values while writing back.
+        let src_data = cpu.data.clone();
+        let stride = cpu.stride;
+
+        for y in 0..h {
+            for x in 0..w {
+                let pixel = rgba_mut(cpu, x, y, w);
+                let (r, g, b) = box3_blur_pixel(&src_data, stride, x, y, w, h);
+                pixel[0] = r;
+                pixel[1] = g;
+                pixel[2] = b;
+                // Alpha unchanged.
+            }
+        }
+        Ok(())
+    }
+}
+
+// ----------------------------------------------------------------
+// Sharpen (unsharp mask)
+// ----------------------------------------------------------------
+#[derive(Default)]
+pub struct SharpenEffect;
+
+impl ComputeEffect for SharpenEffect {
+    fn name(&self) -> &str {
+        "sharpen"
+    }
+
+    fn supports_in_place(&self) -> bool {
+        true
+    }
+
+    fn apply(&self, src: &Frame, desc: &EffectDesc) -> MediaResult<Frame> {
+        let mut dst = clone_frame(src)?;
+        self.apply_in_place(&mut dst, desc)?;
+        Ok(dst)
+    }
+
+    fn apply_in_place(&self, frame: &mut Frame, desc: &EffectDesc) -> MediaResult<()> {
+        let strength = desc
+            .params
+            .first()
+            .and_then(|p| match p {
+                EffectParam::Float(f) => Some(*f),
+                EffectParam::Int(i) => Some(*i as f32),
+                _ => None,
+            })
+            .unwrap_or(1.0);
+
+        let (w, h) = (frame.width, frame.height);
+        let cpu = frame
+            .as_cpu_mut()
+            .ok_or_else(|| MediaError::Other("Not a CPU frame".into()))?;
+
+        // Clone source for computing the blur.
+        let src_data = cpu.data.clone();
+        let stride = cpu.stride;
+
+        for y in 0..h {
+            for x in 0..w {
+                let pixel = rgba_mut(cpu, x, y, w);
+                let (blur_r, blur_g, blur_b) = box3_blur_pixel(&src_data, stride, x, y, w, h);
+
+                let src_idx = y as usize * stride + x as usize * 4;
+                let orig_r = src_data[src_idx] as f32;
+                let orig_g = src_data[src_idx + 1] as f32;
+                let orig_b = src_data[src_idx + 2] as f32;
+
+                pixel[0] = (orig_r + strength * (orig_r - blur_r as f32)).clamp(0.0, 255.0) as u8;
+                pixel[1] = (orig_g + strength * (orig_g - blur_g as f32)).clamp(0.0, 255.0) as u8;
+                pixel[2] = (orig_b + strength * (orig_b - blur_b as f32)).clamp(0.0, 255.0) as u8;
+                // Alpha unchanged.
+            }
+        }
+        Ok(())
+    }
+}
+
+// ----------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------
+
+/// Compute the 3×3 box-blurred RGB for a pixel, reading from `data`.
+fn box3_blur_pixel(data: &[u8], stride: usize, x: u32, y: u32, w: u32, h: u32) -> (u8, u8, u8) {
+    let mut sum_r = 0u32;
+    let mut sum_g = 0u32;
+    let mut sum_b = 0u32;
+    let mut count = 0u32;
+
+    for dy in -1i32..=1 {
+        for dx in -1i32..=1 {
+            let nx = x as i32 + dx;
+            let ny = y as i32 + dy;
+            if nx >= 0 && nx < w as i32 && ny >= 0 && ny < h as i32 {
+                let idx = ny as usize * stride + nx as usize * 4;
+                sum_r += data[idx] as u32;
+                sum_g += data[idx + 1] as u32;
+                sum_b += data[idx + 2] as u32;
+                count += 1;
+            }
+        }
+    }
+
+    (
+        (sum_r / count) as u8,
+        (sum_g / count) as u8,
+        (sum_b / count) as u8,
+    )
+}
 
 /// Clone a CPU-backed Frame (deep copy of pixel data).
 fn clone_frame(src: &Frame) -> MediaResult<Frame> {
@@ -312,5 +446,76 @@ mod tests {
         assert_eq!(GrayscaleEffect.name(), "grayscale");
         assert_eq!(InvertEffect.name(), "invert");
         assert_eq!(ContrastEffect.name(), "contrast");
+        assert_eq!(BlurEffect.name(), "blur");
+        assert_eq!(SharpenEffect.name(), "sharpen");
+    }
+
+    #[test]
+    fn test_blur_changes_pixels() {
+        let frame = make_test_frame();
+        let effect = BlurEffect;
+        let desc = EffectDesc::new(EffectKind::Blur);
+        let result = effect.apply(&frame, &desc).unwrap();
+        let cpu = result.as_cpu().unwrap();
+
+        // With a 2×2 image every pixel sees all 4 neighbours.
+        // pixel (0,0): R = (100+10+200+255)/4 = 141
+        assert_eq!(cpu.data[0], 141);
+    }
+
+    #[test]
+    fn test_blur_uniform_unchanged() {
+        let mut frame = make_test_frame();
+        let cpu = frame.as_cpu_mut().unwrap();
+        cpu.data.fill(128);
+
+        let effect = BlurEffect;
+        let desc = EffectDesc::new(EffectKind::Blur);
+        let result = effect.apply(&frame, &desc).unwrap();
+        let out = result.as_cpu().unwrap();
+        assert!(
+            out.data.iter().all(|&v| v == 128),
+            "Blur of uniform field should stay uniform"
+        );
+    }
+
+    #[test]
+    fn test_sharpen_changes_pixels() {
+        let frame = make_test_frame();
+        let effect = SharpenEffect;
+        let desc = EffectDesc::new(EffectKind::Sharpen).with(EffectParam::Float(1.0));
+        let result = effect.apply(&frame, &desc).unwrap();
+        let cpu = result.as_cpu().unwrap();
+
+        // Blur of pixel (0,0): R = 141
+        // sharpen 1.0: 100 + 1.0*(100-141) = 59
+        assert_eq!(cpu.data[0], 59);
+    }
+
+    #[test]
+    fn test_sharpen_zero_strength_identity() {
+        let frame = make_test_frame();
+        let effect = SharpenEffect;
+        let desc = EffectDesc::new(EffectKind::Sharpen).with(EffectParam::Float(0.0));
+        let result = effect.apply(&frame, &desc).unwrap();
+        let out = result.as_cpu().unwrap();
+        let orig = frame.as_cpu().unwrap();
+        assert_eq!(out.data, orig.data, "Sharpen strength=0 should be identity");
+    }
+
+    #[test]
+    fn test_sharpen_uniform_unchanged() {
+        let mut frame = make_test_frame();
+        let cpu = frame.as_cpu_mut().unwrap();
+        cpu.data.fill(128);
+
+        let effect = SharpenEffect;
+        let desc = EffectDesc::new(EffectKind::Sharpen).with(EffectParam::Float(1.0));
+        let result = effect.apply(&frame, &desc).unwrap();
+        let out = result.as_cpu().unwrap();
+        assert!(
+            out.data.iter().all(|&v| v == 128),
+            "Sharpen of uniform field should stay unchanged"
+        );
     }
 }

@@ -3,7 +3,8 @@
 use anyhow::{Context, Result};
 use media_compute::{ComputeEffect, EffectDesc, EffectKind, ImageCodec};
 use media_compute_cpu::{
-    BrightnessEffect, ContrastEffect, CpuBackend, GrayscaleEffect, InvertEffect,
+    BlurEffect, BrightnessEffect, ContrastEffect, CpuBackend, GrayscaleEffect, InvertEffect,
+    SharpenEffect,
 };
 use media_core::PixelFormat;
 use media_image::{probe_from_path, EncoderFormat};
@@ -134,5 +135,61 @@ pub fn cmd_cpu_invert(input: &str, output: &str, fmt: EncoderFormat) -> Result<(
     std::fs::write(output, &bytes).with_context(|| format!("Failed to write output: {output}"))?;
 
     eprintln!("Applied invert — written to {output}");
+    Ok(())
+}
+
+/// Run the "cpu-blur" subcommand.
+pub fn cmd_cpu_blur(input: &str, output: &str, fmt: EncoderFormat) -> Result<()> {
+    let backend = CpuBackend::new();
+    let input_bytes =
+        std::fs::read(input).with_context(|| format!("Failed to read input: {input}"))?;
+    let frame = backend
+        .decode_from_bytes(&input_bytes, None)
+        .with_context(|| format!("Failed to decode input: {input}"))?;
+
+    let frame = if frame.format != PixelFormat::Rgba8 {
+        media_image::convert::convert_cpu_format(&frame, PixelFormat::Rgba8)?
+    } else {
+        frame
+    };
+
+    let effect = BlurEffect;
+    let desc = EffectDesc::new(EffectKind::Blur);
+    let result = effect.apply(&frame, &desc)?;
+
+    let bytes = backend
+        .encode_to_bytes(&result, fmt)
+        .with_context(|| format!("Failed to encode output: {output}"))?;
+    std::fs::write(output, &bytes).with_context(|| format!("Failed to write output: {output}"))?;
+
+    eprintln!("Applied blur — written to {output}");
+    Ok(())
+}
+
+/// Run the "cpu-sharpen" subcommand.
+pub fn cmd_cpu_sharpen(input: &str, output: &str, strength: f32, fmt: EncoderFormat) -> Result<()> {
+    let backend = CpuBackend::new();
+    let input_bytes =
+        std::fs::read(input).with_context(|| format!("Failed to read input: {input}"))?;
+    let frame = backend
+        .decode_from_bytes(&input_bytes, None)
+        .with_context(|| format!("Failed to decode input: {input}"))?;
+
+    let frame = if frame.format != PixelFormat::Rgba8 {
+        media_image::convert::convert_cpu_format(&frame, PixelFormat::Rgba8)?
+    } else {
+        frame
+    };
+
+    let effect = SharpenEffect;
+    let desc = EffectDesc::new(EffectKind::Sharpen).with(strength);
+    let result = effect.apply(&frame, &desc)?;
+
+    let bytes = backend
+        .encode_to_bytes(&result, fmt)
+        .with_context(|| format!("Failed to encode output: {output}"))?;
+    std::fs::write(output, &bytes).with_context(|| format!("Failed to write output: {output}"))?;
+
+    eprintln!("Applied sharpen (strength={strength}) — written to {output}");
     Ok(())
 }

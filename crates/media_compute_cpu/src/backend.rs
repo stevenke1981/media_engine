@@ -1,7 +1,9 @@
 //! CPU compute backend implementation.
 
 use crate::buffer::CpuBuffer;
-use crate::effects::{BrightnessEffect, ContrastEffect, GrayscaleEffect, InvertEffect};
+use crate::effects::{
+    BlurEffect, BrightnessEffect, ContrastEffect, GrayscaleEffect, InvertEffect, SharpenEffect,
+};
 use media_compute::{
     ComputeBackend, ComputeBuffer, ComputeEffect, EffectDesc, EffectKind, ImageCodec,
 };
@@ -23,6 +25,8 @@ impl CpuBackend {
             Box::new(ContrastEffect),
             Box::new(GrayscaleEffect),
             Box::new(InvertEffect),
+            Box::new(BlurEffect),
+            Box::new(SharpenEffect),
         ];
 
         CpuBackend { effects }
@@ -62,6 +66,8 @@ impl ComputeBackend for CpuBackend {
                     "contrast" => EffectKind::Contrast,
                     "grayscale" => EffectKind::Grayscale,
                     "invert" => EffectKind::Invert,
+                    "blur" => EffectKind::Blur,
+                    "sharpen" => EffectKind::Sharpen,
                     name => EffectKind::Custom(name.to_string()),
                 };
                 EffectDesc::new(kind)
@@ -163,14 +169,15 @@ mod tests {
         assert!(backend.has_effect(&EffectKind::Contrast));
         assert!(backend.has_effect(&EffectKind::Grayscale));
         assert!(backend.has_effect(&EffectKind::Invert));
-        assert!(!backend.has_effect(&EffectKind::Blur));
+        assert!(backend.has_effect(&EffectKind::Blur));
+        assert!(backend.has_effect(&EffectKind::Sharpen));
     }
 
     #[test]
     fn test_available_effects() {
         let backend = CpuBackend::new();
         let effects = backend.available_effects();
-        assert!(effects.len() >= 4);
+        assert!(effects.len() >= 6);
     }
 
     #[test]
