@@ -1,0 +1,9 @@
+[package]
+name = "media_compute"
+version = "0.1.0"
+edition = "2021"
+description = "Compute backend abstraction and scheduler for the Rust Media Engine"
+
+[dependencies]
+media_core = { path = "../media_core" }
+thiserror.workspace = true

@@ -1,0 +1,10 @@
+[package]
+name = "media_image"
+version = "0.1.0"
+edition = "2021"
+description = "Image decode/encode pipeline for the Rust Media Engine"
+
+[dependencies]
+media_core = { path = "../media_core" }
+thiserror.workspace = true
+image.workspace = true

@@ -1,0 +1,13 @@
+[package]
+name = "media_compute_cpu"
+version = "0.1.0"
+edition = "2021"
+description = "CPU compute backend for the Rust Media Engine"
+
+[dependencies]
+media_core = { path = "../media_core" }
+media_compute = { path = "../media_compute" }
+media_image = { path = "../media_image" }
+thiserror.workspace = true
+rayon.workspace = true
+bytemuck.workspace = true

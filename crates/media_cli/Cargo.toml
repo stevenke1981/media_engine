@@ -1,0 +1,13 @@
+[package]
+name = "media_cli"
+version = "0.1.0"
+edition = "2021"
+description = "CLI tool for the Rust Media Engine"
+
+[dependencies]
+media_core = { path = "../media_core" }
+media_image = { path = "../media_image" }
+media_compute = { path = "../media_compute" }
+media_compute_cpu = { path = "../media_compute_cpu" }
+anyhow.workspace = true
+clap.workspace = true
