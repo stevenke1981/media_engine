@@ -17,7 +17,7 @@ impl CpuFrame {
     pub fn new(width: u32, height: u32, format: PixelFormat) -> MediaResult<Self> {
         let bpp = format
             .bytes_per_pixel()
-            .ok_or_else(|| MediaError::UnsupportedPixelFormat(format))?;
+            .ok_or(MediaError::UnsupportedPixelFormat(format))?;
         let stride = width as usize * bpp;
         let size = stride * height as usize;
         Ok(CpuFrame {

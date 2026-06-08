@@ -7,11 +7,11 @@ use media_core::{CpuFrame, Frame, FrameStorage, MediaError, MediaResult, PixelFo
 pub fn convert_cpu_format(frame: &Frame, target_format: PixelFormat) -> MediaResult<Frame> {
     let src = frame
         .as_cpu()
-        .ok_or_else(|| MediaError::Other("Source frame is not CPU-backed".into()))?;
+        .ok_or(MediaError::Other("Source frame is not CPU-backed".into()))?;
 
     let dst_bpp = target_format
         .bytes_per_pixel()
-        .ok_or_else(|| MediaError::UnsupportedPixelFormat(target_format))?;
+        .ok_or(MediaError::UnsupportedPixelFormat(target_format))?;
 
     let pixel_count = (frame.width as usize) * (frame.height as usize);
     let mut dst_data = vec![0u8; pixel_count * dst_bpp];

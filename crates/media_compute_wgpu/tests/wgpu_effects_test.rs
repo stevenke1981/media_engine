@@ -9,7 +9,7 @@
 //! - byte 2 (bits 16-23): Red
 //! - byte 3 (bits 24-31): Alpha
 
-use media_compute::{ComputeBackend, ComputeEffect, EffectDesc, EffectKind, EffectParam};
+use media_compute::{ComputeBackend, EffectDesc, EffectKind, EffectParam};
 use media_compute_wgpu::WgpuBackend;
 use media_core::pixel_format::PixelFormat;
 use media_core::Frame;
@@ -535,7 +535,7 @@ fn test_all_effects_available() {
     assert!(!backend.has_effect(&EffectKind::Custom("nonexistent".into())));
 
     let available = backend.available_effects();
-    assert_eq!(available.len(), 6);
+    assert_eq!(available.len(), 12);
 }
 
 #[test]

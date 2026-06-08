@@ -15,6 +15,12 @@ pub trait Kernel: Send + Sync {
 }
 
 /// Trait for objects that can serve as kernel arguments.
+///
+/// # Safety
+///
+/// Implementations must be valid byte representations suitable for
+/// passing to GPU or accelerator kernels. The type must not contain
+/// any invalid bit patterns or references.
 pub unsafe trait KernelArg: Send + Sync {}
 
 // Safe implementations for basic types.
@@ -86,8 +92,8 @@ impl LaunchConfig {
 
     pub fn xy(width: u32, height: u32, block_x: u32, block_y: u32) -> Self {
         LaunchConfig {
-            grid_x: (width + block_x - 1) / block_x,
-            grid_y: (height + block_y - 1) / block_y,
+            grid_x: width.div_ceil(block_x),
+            grid_y: height.div_ceil(block_y),
             grid_z: 1,
             block_x,
             block_y,
